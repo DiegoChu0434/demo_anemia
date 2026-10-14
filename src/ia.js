@@ -99,7 +99,6 @@ Reglas:
         throw new Error("HTTP " + res.status + (detalle ? " - " + detalle : ""));
       }
       const data = await res.json();
-      if (window.ACUso && data.usageMetadata) window.ACUso.registrar(data.usageMetadata);
       const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       return JSON.parse(limpiarJSON(txt));
     } finally {

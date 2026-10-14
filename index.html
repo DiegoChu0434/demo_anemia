@@ -60,20 +60,6 @@
   .hist-item:hover{color:var(--violeta2)}
   .hist-empty{font-size:11.5px;color:var(--mut2);font-family:var(--mono)}
 
-  /* Consumo IA */
-  #panelUso{display:none}
-  .uso-row{margin:11px 0}
-  .uso-row .uso-top{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;color:var(--mut);margin-bottom:5px}
-  .uso-row .uso-top b{color:var(--txt);font-weight:600}
-  .uso-bar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden}
-  .uso-bar>i{display:block;height:100%;border-radius:3px;background:var(--verde);transition:width .4s,background .4s}
-  .uso-bar>i.warn{background:var(--ambar)} .uso-bar>i.bad{background:var(--rojo)}
-  .uso-note{font-size:10px;color:var(--mut2);font-family:var(--mono);line-height:1.5;margin-top:10px}
-  .uso-reset{font-size:10.5px;color:var(--violeta2);cursor:pointer;background:none;border:none;padding:0;margin-top:8px;font-family:var(--mono)}
-  .uso-reset:hover{color:#fff}
-  @keyframes usoFlash{0%{background:rgba(139,123,240,.18)}100%{background:transparent}}
-  #panelUso.uso-flash{animation:usoFlash .6s ease;border-radius:8px}
-
   /* Main */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 
@@ -209,6 +195,56 @@
         align-items:center;justify-content:center;font-size:13px;cursor:pointer;z-index:20}
   .help:hover{color:var(--violeta2);border-color:var(--violeta)}
 
+  .side-hint{font-size:9px;color:var(--mut2);letter-spacing:0;font-family:var(--mono)}
+  .tabla-row[data-ds]{position:relative}
+  .tabla-row[data-ds]:hover{color:var(--violeta2)}
+  .tabla-row[data-ds]:hover .cnt{color:var(--violeta2)}
+
+  /* Modal modelo 3FN */
+  .modal-ov{position:fixed;inset:0;background:rgba(5,5,10,.72);backdrop-filter:blur(3px);
+            display:none;align-items:center;justify-content:center;z-index:50;padding:30px}
+  .modal-ov.open{display:flex;animation:ovIn .2s ease}
+  @keyframes ovIn{from{opacity:0}to{opacity:1}}
+  .modal-box{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;
+             width:min(680px,100%);max-height:86vh;display:flex;flex-direction:column;
+             box-shadow:0 0 0 1px var(--violeta),0 20px 60px rgba(139,123,240,.18);animation:boxIn .25s ease}
+  @keyframes boxIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+              padding:18px 20px;border-bottom:1px solid var(--line)}
+  .modal-sub{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--violeta2)}
+  .modal-tit{font-size:19px;font-weight:700;margin-top:3px}
+  .modal-x{background:none;border:1px solid var(--line2);color:var(--mut);width:30px;height:30px;
+           border-radius:8px;cursor:pointer;font-size:13px;flex-shrink:0;transition:.15s}
+  .modal-x:hover{color:var(--txt);border-color:var(--violeta)}
+  .modal-body{padding:18px 20px;overflow-y:auto}
+  .mb-meta{font-size:12.5px;color:var(--mut);line-height:1.6;margin-bottom:16px}
+  .mb-meta b{color:var(--txt)}
+  .mb-tabla{background:var(--bg3);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+  .mb-tabla .mb-th{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;
+                   border-bottom:1px solid var(--line);background:rgba(139,123,240,.07)}
+  .mb-tabla .mb-th .nm{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--violeta2)}
+  .mb-tabla .mb-th .tag{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--mut);
+                        border:1px solid var(--line2);border-radius:10px;padding:2px 8px}
+  .mb-tabla .mb-field{display:flex;gap:9px;padding:7px 13px;font-size:12px;border-bottom:1px solid rgba(32,32,47,.5);align-items:baseline}
+  .mb-tabla .mb-field:last-child{border-bottom:none}
+  .mb-tabla .mb-field .k{font-family:var(--mono);color:var(--txt);min-width:150px}
+  .mb-tabla .mb-field .d{color:var(--mut);font-size:11.5px}
+  .mb-key{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;margin-left:6px}
+  .mb-key.pk{background:rgba(251,191,36,.15);color:var(--ambar)}
+  .mb-key.fk{background:rgba(139,123,240,.18);color:var(--violeta2)}
+  .mb-note{font-size:11.5px;color:var(--mut);line-height:1.6;background:var(--bg3);
+           border-left:2px solid var(--violeta);border-radius:0 8px 8px 0;padding:11px 13px;margin-top:6px}
+  .mb-note b{color:var(--txt)}
+
+  .cq-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);
+           border-radius:9px;margin-bottom:8px;cursor:pointer;transition:.15s;background:var(--bg3)}
+  .cq-item:hover{border-color:var(--violeta);transform:translateX(3px)}
+  .cq-item .cq-n{font-family:var(--mono);font-size:11px;color:var(--mut2);min-width:22px}
+  .cq-item .cq-q{flex:1;font-size:13.5px;color:var(--txt)}
+  .cq-item .cq-go{color:var(--violeta);font-size:14px;opacity:0;transition:.15s}
+  .cq-item:hover .cq-go{opacity:1}
+  .cq-empty{font-size:13px;color:var(--mut);text-align:center;padding:30px 0}
+
   ::-webkit-scrollbar{width:8px;height:8px}
   ::-webkit-scrollbar-thumb{background:#26263a;border-radius:6px}
   ::-webkit-scrollbar-track{background:transparent}
@@ -222,9 +258,9 @@
   <span class="burger">☰</span>
   <div class="brand"><b>AnemiaCero</b><span>junín analytics</span></div>
   <nav class="topnav">
-    <a class="on">Explorar</a>
-    <a>Consultas</a>
-    <a>Exportar</a>
+    <a class="on" id="navExplorar">Explorar</a>
+    <a id="navConsultas">Consultas</a>
+    <a id="navExportar">Exportar</a>
   </nav>
   <div class="topright">
     <div class="status"><span class="led"></span>CONECTADO</div>
@@ -236,34 +272,14 @@
 
   <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar">
-    <p class="side-sec">DATASETS</p>
-    <div class="tabla-row"><span>gestantes</span><span class="cnt" id="cGest">—</span></div>
-    <div class="tabla-row"><span>controles_cred</span><span class="cnt" id="cCred">—</span></div>
-    <div class="tabla-row"><span>ninos_anemia</span><span class="cnt" id="cNin">—</span></div>
-    <div class="tabla-row"><span>establecimientos</span><span class="cnt" id="cEst">441</span></div>
+    <p class="side-sec">DATASETS <span class="side-hint">· clic para ver su 3FN</span></p>
+    <div class="tabla-row" data-ds="gestantes"><span>gestantes</span><span class="cnt" id="cGest">—</span></div>
+    <div class="tabla-row" data-ds="cred"><span>controles_cred</span><span class="cnt" id="cCred">—</span></div>
+    <div class="tabla-row" data-ds="ninos"><span>ninos_anemia</span><span class="cnt" id="cNin">—</span></div>
+    <div class="tabla-row" data-ds="establecimientos"><span>establecimientos</span><span class="cnt" id="cEst">441</span></div>
     <p class="side-sec">HISTORIAL</p>
     <div id="historial"><div class="hist-empty">— sin consultas aún</div></div>
 
-    <div id="panelUso">
-      <p class="side-sec">CONSUMO IA</p>
-      <div class="uso-row">
-        <div class="uso-top"><span>Llamadas hoy</span><span><b id="usoRpdVal">0</b> / <span id="usoRpdLim">—</span></span></div>
-        <div class="uso-bar"><i id="usoRpdBar" style="width:0%"></i></div>
-      </div>
-      <div class="uso-row">
-        <div class="uso-top"><span>Por minuto</span><span><b id="usoRpmVal">0</b> / <span id="usoRpmLim">—</span></span></div>
-        <div class="uso-bar"><i id="usoRpmBar" style="width:0%"></i></div>
-      </div>
-      <div class="uso-row">
-        <div class="uso-top"><span>Tokens/min</span><span><b id="usoTpmVal">0</b> / <span id="usoTpmLim">—</span></span></div>
-        <div class="uso-bar"><i id="usoTpmBar" style="width:0%"></i></div>
-      </div>
-      <div class="uso-row">
-        <div class="uso-top"><span>Tokens hoy</span><span><b id="usoTokDia">0</b></span></div>
-      </div>
-      <p class="uso-note" id="usoNote"></p>
-      <button class="uso-reset" id="usoReset">↺ reiniciar contador</button>
-    </div>
   </aside>
 
   <!-- ===== MAIN ===== -->
@@ -354,12 +370,39 @@
 
 <div class="help" title="Ayuda" id="helpBtn">?</div>
 
+<div class="modal-ov" id="modeloModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-sub" id="modeloSub">MODELO 3FN</div>
+        <div class="modal-tit" id="modeloTit">—</div>
+      </div>
+      <button class="modal-x" id="modeloClose" title="Cerrar">✕</button>
+    </div>
+    <div class="modal-body" id="modeloBody"></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="consultasModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-sub">HISTORIAL DE CONSULTAS</div>
+        <div class="modal-tit">Tus preguntas</div>
+      </div>
+      <button class="modal-x" id="consultasClose" title="Cerrar">✕</button>
+    </div>
+    <div class="modal-body" id="consultasBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="data/data.js"></script>
 <script src="src/config.js"></script>
 <script src="src/app.js"></script>
-<script src="src/uso.js"></script>
 <script src="src/ia.js"></script>
 <script src="src/asistente.js"></script>
-<script src="src/panel-uso.js"></script>
+<script src="src/modelo.js"></script>
+<script src="src/exportar.js"></script>
 </body>
 </html>

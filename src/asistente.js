@@ -266,5 +266,10 @@
   const help = document.getElementById("helpBtn");
   if (help) help.addEventListener("click", () => enviar("ayuda"));
 
+  window.ACAsistente = {
+    consultas() { return historial.slice(); },
+    reejecutar(q) { if (q) enviar(q); },
+  };
+
   initSidebar();
 })();

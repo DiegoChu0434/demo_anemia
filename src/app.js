@@ -211,6 +211,35 @@
         if (opts.tablaRojos) { $("panelTabla").classList.add("hl"); $("panelTabla").scrollIntoView({behavior:"smooth",block:"nearest"}); }
       });
       clearTimeout(window.__hlT); window.__hlT = setTimeout(clearHl, 2500);
+    },
+    estadoActual() {
+      const s = scope();
+      const ambito = dist ? "Distrito" : prov ? "Provincia" : "Región";
+      const nombre = dist ? cap(dist) : prov ? cap(prov) : "Región Junín";
+      let filas = D.distritos.filter(d => !prov || d.Provincia === prov);
+      if (dist) filas = filas.filter(d => d.Distrito === dist);
+      const alertaLabel = { verde: "Verde", ambar: "Ámbar", rojo: "Rojo", sin_datos: "Datos insuficientes" };
+      return {
+        ambito, nombre,
+        provincia: prov ? cap(prov) : "", distrito: dist ? cap(dist) : "",
+        totalRegistros: D.meta.registros.total,
+        kpis: [
+          { cod: "IND-01", nombre: "Continuidad Hb en gestantes (5° dosaje)", valor: s.ind01 },
+          { cod: "IND-02", nombre: "Recuperación de gestantes", valor: s.ind02 },
+          { cod: "IND-03", nombre: "Abandono de controles CRED", valor: s.ind03 },
+          { cod: "IND-04", nombre: "Adherencia a suplementación (5° toma)", valor: s.ind04 },
+          { cod: "IND-05", nombre: "Recuperación de anemia infantil", valor: s.ind05 },
+        ],
+        alerta: alertaLabel[s.alerta] || s.alerta,
+        volumen: { gestantes: s.gestantes, cred: s.cred, ninos: s.ninos },
+        funnel: { clave: funnelKey, serie: D.funnel[funnelKey].slice() },
+        severidad: { gestantes: D.severidad.gestantes, ninos: D.severidad.ninos },
+        distritos: filas.map(r => ({
+          Distrito: cap(r.Distrito), Provincia: cap(r.Provincia),
+          ninos: r.ninos, ind03: r.ind03, ind04: r.ind04, ind05: r.ind05,
+          alerta: alertaLabel[r.alerta] || r.alerta,
+        })),
+      };
     }
   };
 

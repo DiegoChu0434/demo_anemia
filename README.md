@@ -43,8 +43,8 @@ demo_anemia/
 | `src/app.js` | Lógica del dashboard. |
 | `src/asistente.js` | Asistente de consulta: interpreta la pregunta (con IA si hay key, o con el motor de reglas local) y dispara el dashboard con los datos reales del ETL. |
 | `src/ia.js` | Capa de IA (Google Gemini): interpreta preguntas en lenguaje natural libre y las convierte en una intención estructurada. Las cifras siempre salen del JSON, no las inventa el modelo. Si falla o no hay key, cae al motor de reglas. |
-| `src/uso.js` | Contador de consumo de la IA: registra las llamadas y los tokens reales (`usageMetadata`) de cada respuesta, con persistencia en `localStorage` y reinicio diario. |
-| `src/panel-uso.js` | Panel lateral que muestra los límites del plan y el consumo acumulado con barras de progreso. |
+| `src/modelo.js` | Al hacer clic en un dataset del sidebar, muestra su estructura en tercera forma normal (3FN) según el informe (tablas de hecho, dimensiones, PK/FK). |
+| `src/exportar.js` | Menú *Consultas* (lista de preguntas hechas, clic para repetir) y menú *Exportar* (genera un Excel .xlsx con el estado actual del dashboard: resumen, distritos, embudo y severidad). |
 | `src/config.example.js` | Plantilla de configuración de la IA (sin key). **Esta sí se sube al repo.** |
 | `src/config.js` | Tu configuración real con la API key. **Ignorada por git** (`.gitignore`). |
 
@@ -101,25 +101,20 @@ El asistente puede usar una **IA gratuita** para entender preguntas en lenguaje 
 > Como es una demo que corre en el navegador, la clave queda visible en el cliente: no uses una key sensible.
 > Para publicar en producción, protege la clave detrás de un backend o función serverless.
 
-### Apartado de consumo (límites y uso)
+## Consultas y exportación
 
-Cuando la IA está configurada, el panel lateral muestra una sección **CONSUMO IA** con:
+En la barra superior:
 
-- **Llamadas hoy** vs. el límite diario (RPD).
-- **Por minuto** (RPM) y **Tokens/min** (TPM) de la ventana de los últimos 60 segundos.
-- **Tokens hoy** acumulados.
+- **Consultas**: abre la lista de todas las preguntas que has hecho en la sesión. Al hacer clic en una,
+  se vuelve a ejecutar y el dashboard regresa a ese estado.
+- **Exportar**: genera un archivo **Excel (.xlsx)** con lo que estás viendo en ese momento (según el
+  ámbito y los filtros actuales). Incluye cuatro hojas: *Resumen* (ámbito, 5 indicadores, alerta y
+  volumen), *Distritos* (la tabla con autofiltro), *Embudo* y *Severidad*. Usa la librería SheetJS
+  cargada desde CDN, por lo que la primera exportación requiere conexión a internet.
 
-Las barras cambian de color al acercarse al límite (ámbar ≥ 70%, rojo ≥ 90%). El botón
-*reiniciar contador* pone el consumo local a cero.
-
-Cómo funciona y sus límites:
-
-- El conteo de tokens es **real**: sale del campo `usageMetadata` que Gemini devuelve en cada respuesta.
-- El consumo se guarda en el navegador (`localStorage`) y el contador diario se reinicia solo cada día.
-- **Solo cuenta el consumo hecho desde esta página.** Google no expone una API para leer tu cuota real en
-  tiempo real, así que si usas la misma clave en otro lugar, ese gasto no aparece aquí.
-- Los límites (RPM/RPD/TPM) son **referenciales** y se configuran en `src/config.js` → `LIMITES`.
-  Los valores vigentes de tu cuenta se consultan en [Google AI Studio](https://aistudio.google.com).
+> Nota: la versión gratuita de SheetJS exporta estructura, varias hojas, anchos de columna y autofiltro,
+> pero no colores de celda (eso solo está en su edición de pago). El semáforo se incluye como texto
+> en la columna *Alerta*.
 
 ## Cómo ejecutar
 
