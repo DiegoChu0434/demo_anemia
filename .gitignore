@@ -1,0 +1,21 @@
+# --- Secretos / configuracion local ---
+# La clave de la IA vive aqui y NO debe subirse. La plantilla publica es src/config.example.js.
+src/config.js
+
+# --- Python (ETL) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Sistema operativo ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# --- Editor ---
+.vscode/
+.idea/
+*.swp

@@ -7,14 +7,46 @@ Reproduce el flujo descrito en el informe: **ETL → indicadores analíticos →
 
 ## Contenido
 
-| Archivo | Qué es |
+### Estructura del proyecto
+
+```
+demo_anemia/
+├── index.html                  # Página del dashboard (punto de entrada)
+├── README.md
+├── .gitignore                  # Protege src/config.js y temporales
+├── Informe_Final.docx          # Documento de referencia
+│
+├── data/                       # Datos
+│   ├── dashboard_data.json     #   Resultado del ETL (legible)
+│   ├── data.js                 #   Mismos datos como variable JS (abrir sin servidor)
+│   └── raw/                    #   Los 3 CSV crudos de la DIRESA Junín
+│
+├── etl/
+│   └── etl_indicadores.py      # ETL: limpia los CSV y calcula los indicadores
+│
+└── src/                        # Código del front
+    ├── app.js                  #   Lógica del dashboard
+    ├── asistente.js            #   Chat: interpreta la pregunta y dispara el tablero
+    ├── ia.js                   #   Capa de IA (Gemini): intención en lenguaje natural
+    ├── uso.js                  #   Contador de consumo de la IA (llamadas y tokens)
+    ├── panel-uso.js            #   Panel lateral de límites y consumo de la IA
+    ├── config.example.js       #   Plantilla de configuración (SIN key, sí va a git)
+    └── config.js               #   Tu config con la API key (NO va a git)
+```
+
+| Pieza | Qué es |
 |---|---|
-| `etl_indicadores.py` | Proceso ETL en Python: limpia los 3 CSV, estandariza (NULL→null, fechas ISO, severidad LEV/MOD/SEV, deduplicación) y calcula los 7 indicadores (IND-01 a IND-07) y el embudo, agregados por provincia y distrito. |
-| `dashboard_data.json` | Resultado del ETL (datos legibles). |
-| `data.js` | Los mismos datos embebidos como variable JS (permite abrir el dashboard sin servidor). |
+| `etl/etl_indicadores.py` | Proceso ETL en Python: limpia los 3 CSV de `data/raw/`, estandariza (NULL→null, fechas ISO, severidad LEV/MOD/SEV, deduplicación) y calcula los 7 indicadores (IND-01 a IND-07) y el embudo, agregados por provincia y distrito. Escribe en `data/`. |
+| `data/dashboard_data.json` | Resultado del ETL (datos legibles). |
+| `data/data.js` | Los mismos datos embebidos como variable JS (permite abrir el dashboard sin servidor). |
 | `index.html` | Dashboard web: KPIs, embudo de seguimiento, filtros en cascada, distribución por severidad, tabla de distritos con semáforo de alertas. |
-| `app.js` | Lógica del dashboard. |
-| `asistente.js` | Asistente de consulta local: responde preguntas en lenguaje natural usando los datos reales del ETL (sin internet ni API externa). |
+| `src/app.js` | Lógica del dashboard. |
+| `src/asistente.js` | Asistente de consulta: interpreta la pregunta (con IA si hay key, o con el motor de reglas local) y dispara el dashboard con los datos reales del ETL. |
+| `src/ia.js` | Capa de IA (Google Gemini): interpreta preguntas en lenguaje natural libre y las convierte en una intención estructurada. Las cifras siempre salen del JSON, no las inventa el modelo. Si falla o no hay key, cae al motor de reglas. |
+| `src/uso.js` | Contador de consumo de la IA: registra las llamadas y los tokens reales (`usageMetadata`) de cada respuesta, con persistencia en `localStorage` y reinicio diario. |
+| `src/panel-uso.js` | Panel lateral que muestra los límites del plan y el consumo acumulado con barras de progreso. |
+| `src/config.example.js` | Plantilla de configuración de la IA (sin key). **Esta sí se sube al repo.** |
+| `src/config.js` | Tu configuración real con la API key. **Ignorada por git** (`.gitignore`). |
 
 ## Experiencia (flujo conversacional)
 
@@ -35,17 +67,71 @@ El asistente entiende preguntas escritas y responde con los datos reales. Funcio
 
 Al mencionar un distrito o provincia, el asistente **sincroniza los filtros** del dashboard automáticamente.
 
+## IA opcional (Google Gemini)
+
+El asistente puede usar una **IA gratuita** para entender preguntas en lenguaje natural libre
+(no solo las frases pre-armadas del motor de reglas). Funciona así:
+
+1. Tu pregunta se envía a **Gemini**, que la interpreta y decide *qué* indicador, lugar y tipo de
+   respuesta corresponde (devuelve una intención estructurada).
+2. El dashboard arma la respuesta con las **cifras reales del JSON**. La IA nunca inventa números:
+   solo interpreta la pregunta y redacta una frase de contexto.
+3. Si no hay internet, falla la API o no configuraste la key, el asistente **cae automáticamente**
+   al motor de reglas local. Nada se rompe.
+
+### Configurar la API key (gratis, sin tarjeta)
+
+1. Entra a **https://aistudio.google.com/apikey** e inicia sesión con tu cuenta Google.
+2. Clic en **Create API key** y copia la clave.
+3. Copia **`src/config.example.js`** como **`src/config.js`** y pega tu clave en `GEMINI_API_KEY`:
+
+   ```js
+   window.AC_CONFIG = {
+     GEMINI_API_KEY: "TU_CLAVE_AQUI",
+     GEMINI_MODEL: "gemini-2.0-flash",
+     TIMEOUT_MS: 9000,
+   };
+   ```
+
+4. Recarga `index.html`. Ya puedes preguntar en lenguaje natural libre, por ejemplo:
+   *«¿en qué distrito de Satipo se recuperan menos niños?»* o *«compárame la adherencia entre Huancayo y Jauja»*.
+
+> **Seguridad:** `src/config.js` está en `.gitignore`, así que tu clave **nunca se sube al repositorio**.
+> La plantilla `src/config.example.js` (sin clave) sí se versiona, para que otros sepan qué configurar.
+> Como es una demo que corre en el navegador, la clave queda visible en el cliente: no uses una key sensible.
+> Para publicar en producción, protege la clave detrás de un backend o función serverless.
+
+### Apartado de consumo (límites y uso)
+
+Cuando la IA está configurada, el panel lateral muestra una sección **CONSUMO IA** con:
+
+- **Llamadas hoy** vs. el límite diario (RPD).
+- **Por minuto** (RPM) y **Tokens/min** (TPM) de la ventana de los últimos 60 segundos.
+- **Tokens hoy** acumulados.
+
+Las barras cambian de color al acercarse al límite (ámbar ≥ 70%, rojo ≥ 90%). El botón
+*reiniciar contador* pone el consumo local a cero.
+
+Cómo funciona y sus límites:
+
+- El conteo de tokens es **real**: sale del campo `usageMetadata` que Gemini devuelve en cada respuesta.
+- El consumo se guarda en el navegador (`localStorage`) y el contador diario se reinicia solo cada día.
+- **Solo cuenta el consumo hecho desde esta página.** Google no expone una API para leer tu cuota real en
+  tiempo real, así que si usas la misma clave en otro lugar, ese gasto no aparece aquí.
+- Los límites (RPM/RPD/TPM) son **referenciales** y se configuran en `src/config.js` → `LIMITES`.
+  Los valores vigentes de tu cuenta se consultan en [Google AI Studio](https://aistudio.google.com).
+
 ## Cómo ejecutar
 
 ### 1. (Opcional) Regenerar los datos desde los CSV
-Requiere Python con `pandas`. Desde esta carpeta:
+Requiere Python con `pandas`. Desde la raíz del proyecto:
 
 ```
-python etl_indicadores.py
+python etl/etl_indicadores.py
 ```
 
-Lee los CSV que están en la carpeta superior (`..`), valida los conteos y regenera
-`dashboard_data.json` y `data.js`.
+Lee los CSV de `data/raw/`, valida los conteos y regenera
+`data/dashboard_data.json` y `data/data.js`.
 
 ### 2. Ver el dashboard
 Abre **`index.html`** con doble clic (funciona directamente en el navegador, sin servidor).

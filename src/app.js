@@ -1,25 +1,19 @@
-/* AnemiaCero Junin - Dashboard demo
-   Consume window.DASHBOARD_DATA (generado por el ETL en data.js). */
 (function () {
   const D = window.DASHBOARD_DATA;
   if (!D) { document.body.innerHTML = "<p style='padding:40px'>No se encontró data.js. Ejecuta primero <code>python etl_indicadores.py</code>.</p>"; return; }
 
-  // ---------- estado ----------
   let prov = "", dist = "", funnelKey = "cred_mes";
   let sortCol = "ninos", sortDir = -1;
 
-  // ---------- helpers ----------
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => n == null ? "–" : n.toLocaleString("es-PE");
   const pct = (v) => v == null ? "–" : v.toFixed(1) + "%";
 
-  // clasificacion de color por indicador (umbrales del informe, HU-03 / Tabla 3.7)
-  function clsRecup(v){ if(v==null)return""; return v<30?"bad":v<50?"warn":"good"; }       // recuperacion: mayor es mejor
-  function clsAbandono(v){ if(v==null)return""; return v>50?"bad":v>40?"warn":"good"; }     // abandono: menor es mejor
+  function clsRecup(v){ if(v==null)return""; return v<30?"bad":v<50?"warn":"good"; }
+  function clsAbandono(v){ if(v==null)return""; return v>50?"bad":v>40?"warn":"good"; }
   function clsAdher(v){ if(v==null)return""; return v<40?"bad":v<60?"warn":"good"; }
   function clsCont(v){ if(v==null)return""; return v<15?"bad":v<40?"warn":"good"; }
 
-  // ---------- poblar filtros ----------
   function initFiltros() {
     const sp = $("selProv");
     D.provincias.forEach(p => {
@@ -50,11 +44,9 @@
   }
   const cap = (s) => s ? s.charAt(0)+s.slice(1).toLowerCase() : s;
 
-  // ---------- obtener el registro del ambito actual ----------
   function scope() {
     if (dist) return D.distritos.find(d => d.Distrito===dist && (!prov || d.Provincia===prov));
     if (prov) return D.provincias.find(p => p.Provincia===prov);
-    // global
     return {
       ind01: D.global.ind01_continuidad_hb, ind02: D.global.ind02_recup_gestantes,
       ind03: D.global.ind03_abandono_cred, ind04: D.global.ind04_adherencia_sup,
@@ -63,17 +55,15 @@
     };
   }
 
-  // ---------- render principal ----------
   function render() {
     const s = scope();
-    // ambito
     $("scopeLvl").textContent = dist ? "Distrito" : prov ? "Provincia" : "Ámbito";
     $("scopeNm").textContent  = dist ? cap(dist) : prov ? cap(prov) : "Región Junín";
     $("badgeRegs").textContent = fmt(D.meta.registros.total) + " registros";
 
     renderAlerta(s.alerta);
     renderKpis(s);
-    renderFunnel();     // el embudo usa series globales (cohorte regional) salvo ambito global
+    renderFunnel();
     renderSeveridad();
     renderVolumen(s);
     renderTabla();
@@ -182,7 +172,6 @@
     }));
   }
 
-  // ---------- resaltado temporal ----------
   function clearHl() {
     document.querySelectorAll(".kpi.hl,.panel.hl,tbody tr.hl").forEach(e => e.classList.remove("hl"));
   }
@@ -193,7 +182,6 @@
       b.classList.toggle("on", b.dataset.f === key));
   }
 
-  // ---------- API publica para el asistente ----------
   window.ACDashboard = {
     setFiltro(provincia, distrito) {
       prov = provincia || "";
@@ -203,7 +191,6 @@
       $("selDist").value = dist;
       render();
     },
-    // enfoque contextual segun la pregunta: {prov, dist, kpi, funnel, tabla}
     enfocar(opts) {
       opts = opts || {};
       if (opts.prov !== undefined || opts.dist !== undefined) {
@@ -213,7 +200,6 @@
       if (opts.funnel) setFunnel(opts.funnel);
       render();
       clearHl();
-      // resaltar el elemento relevante tras el render
       requestAnimationFrame(() => {
         if (opts.kpi) {
           const el = document.querySelector(`.kpi[data-k="${opts.kpi}"]`);
@@ -224,12 +210,10 @@
         }
         if (opts.tablaRojos) { $("panelTabla").classList.add("hl"); $("panelTabla").scrollIntoView({behavior:"smooth",block:"nearest"}); }
       });
-      // quitar resaltado a los 2.5s
       clearTimeout(window.__hlT); window.__hlT = setTimeout(clearHl, 2500);
     }
   };
 
-  // ---------- init ----------
   initFiltros();
   render();
 })();
