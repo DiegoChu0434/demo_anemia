@@ -16,8 +16,21 @@
   };
   const MIN_CASOS = 10;
 
+  // Hay backend (Netlify Function) cuando el sitio se sirve por http(s) y NO es
+  // apertura local del archivo. En ese caso la key vive en el servidor y el
+  // navegador llama a /api/gemini. En local (file:// o localhost) se usa la key
+  // de config.js directamente.
+  const hayKeyLocal = () => !!(CFG.GEMINI_API_KEY && CFG.GEMINI_API_KEY.trim());
+  const esServidorRemoto = () => {
+    const p = location.protocol;
+    const h = location.hostname;
+    const local = h === "localhost" || h === "127.0.0.1" || h === "";
+    return (p === "http:" || p === "https:") && !local;
+  };
+  const usaBackend = () => esServidorRemoto();
+
   function disponible() {
-    return !!(CFG.GEMINI_API_KEY && CFG.GEMINI_API_KEY.trim());
+    return usaBackend() || hayKeyLocal();
   }
 
   function construirContexto() {
@@ -76,13 +89,20 @@ Reglas:
   }
 
   async function llamarGemini(pregunta, historial) {
-    const model = CFG.GEMINI_MODEL || "gemini-2.0-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(CFG.GEMINI_API_KEY)}`;
     const body = {
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ role: "user", parts: [{ text: construirContexto() + formatearHistorial(historial) + "\n\nPregunta actual del usuario: " + pregunta }] }],
       generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
     };
+    // En servidor remoto (Netlify) se llama a la funcion /api/gemini, que
+    // guarda la key en el entorno. En local, directo a Google con la key de config.js.
+    let url;
+    if (usaBackend()) {
+      url = "/api/gemini";
+    } else {
+      const model = CFG.GEMINI_MODEL || "gemini-flash-latest";
+      url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(CFG.GEMINI_API_KEY)}`;
+    }
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), CFG.TIMEOUT_MS || 9000);
     try {
