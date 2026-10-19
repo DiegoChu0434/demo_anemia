@@ -1,0 +1,7 @@
+# No subir la config local con la API key: en Netlify la key vive como
+# variable de entorno (GEMINI_API_KEY) y la usa la Netlify Function.
+src/config.js
+
+# Datos crudos y documentos no necesarios para el sitio
+data/raw/
+Informe_Final.docx
