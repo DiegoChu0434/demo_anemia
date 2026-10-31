@@ -58,12 +58,6 @@
   .topnav a{color:var(--mut);font-size:13px;text-decoration:none;cursor:pointer;transition:.15s}
   .topnav a:hover,.topnav a.on{color:var(--txt)}
   .topright{margin-left:auto;display:flex;align-items:center;gap:16px}
-  .status{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mut);
-          font-family:var(--mono);letter-spacing:.5px}
-  .status .led{width:7px;height:7px;border-radius:50%;background:var(--verde);box-shadow:0 0 8px var(--verde)}
-  .btn-new{background:transparent;border:1px solid var(--line2);color:var(--txt);
-           padding:7px 14px;border-radius:7px;font-size:12.5px;cursor:pointer;transition:.15s}
-  .btn-new:hover{border-color:var(--violeta);color:var(--violeta2)}
   .btn-theme{background:transparent;border:1px solid var(--line2);color:var(--txt);width:34px;height:34px;
              border-radius:8px;font-size:15px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center}
   .btn-theme:hover{border-color:var(--violeta)}
@@ -278,9 +272,7 @@
     <a id="navExportar">Exportar</a>
   </nav>
   <div class="topright">
-    <div class="status"><span class="led"></span>CONECTADO</div>
     <button class="btn-theme" id="themeToggle" title="Cambiar tema"><span id="themeIcon">🌙</span></button>
-    <button class="btn-new">Recargar datos</button>
   </div>
 </div>
 
