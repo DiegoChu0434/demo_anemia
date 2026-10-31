@@ -24,6 +24,16 @@
       kw:["continuidad", "hemoglobina", "dosaje", "dosajes", "seguimiento gestante"], mejor:"alto", suf:"de gestantes llega al 5º dosaje" },
     { key:"ind02", cod:"IND-02", nom:"recuperación de gestantes", campo:"ind02",
       kw:["recuperacion gestante", "gestantes recuperadas", "recupera gestante"], mejor:"alto", suf:"de gestantes se recupera" },
+    { key:"ind08", cod:"IND-08", nom:"desnutrición crónica infantil", campo:"ind08",
+      kw:["desnutricion", "cronica", "talla", "retraso", "dci"], mejor:"bajo", suf:"de niños CRED tiene desnutrición crónica" },
+    { key:"ind09", cod:"IND-09", nom:"cobertura de suplementación en CRED", campo:"ind09",
+      kw:["cobertura suplementacion", "cobertura hierro", "suplemento cred", "cobertura supl"], mejor:"alto", suf:"de niños CRED recibe suplementación" },
+    { key:"ind10", cod:"IND-10", nom:"bajo peso al nacer", campo:"ind10",
+      kw:["bajo peso", "peso al nacer", "peso nacer", "bpn", "2500"], mejor:"bajo", suf:"de nacidos vivos tiene bajo peso (<2500g)" },
+    { key:"ind11", cod:"IND-11", nom:"prematuridad", campo:"ind11",
+      kw:["prematur", "prematuro", "pretermino", "37 semanas", "gestacion corta"], mejor:"bajo", suf:"de nacimientos son prematuros (<37 sem)" },
+    { key:"ind12", cod:"IND-12", nom:"parto por cesárea", campo:"ind12",
+      kw:["cesarea", "cesareas", "tipo de parto", "parto cesarea"], mejor:"neutro", suf:"de partos son por cesárea" },
   ];
 
   function detectarLugar(q) {
@@ -40,8 +50,12 @@
   function globalRec() {
     return { ind01:D.global.ind01_continuidad_hb, ind02:D.global.ind02_recup_gestantes,
              ind03:D.global.ind03_abandono_cred, ind04:D.global.ind04_adherencia_sup,
-             ind05:D.global.ind05_recup_ninos, alerta:D.global.alerta,
-             gestantes:D.meta.registros.gestantes, cred:D.meta.registros.cred, ninos:D.meta.registros.ninos };
+             ind05:D.global.ind05_recup_ninos,
+             ind08:D.global.ind08_desnutricion_cronica, ind09:D.global.ind09_cobertura_supl,
+             ind10:D.global.ind10_bajo_peso, ind11:D.global.ind11_prematuridad, ind12:D.global.ind12_cesarea,
+             alerta:D.global.alerta,
+             gestantes:D.meta.registros.gestantes, cred:D.meta.registros.cred, ninos:D.meta.registros.ninos,
+             credn:D.meta.registros.credn, nacidos:D.meta.registros.nacidos };
   }
   function detectarIndicador(q) {
     let best = null, score = 0;
@@ -97,25 +111,41 @@
     if (g == null || v == null) return "";
     const dif = (v - g).toFixed(1);
     if (Math.abs(dif) < 0.1) return " Está en línea con el promedio regional.";
+    if (ind.mejor === "neutro")
+      return ` ${v > g ? "Por encima" : "Por debajo"} del promedio regional (${pct(g)}).`;
     const peor = ind.mejor === "alto" ? v < g : v > g;
     return ` ${peor ? "Por debajo" : "Mejor que"} el promedio regional (${pct(g)}).`;
   }
 
   const MIN_CASOS = 10;
+  const VOL_DE = {
+    ind01:"gestantes", ind02:"gestantes", ind03:"cred", ind04:"ninos", ind05:"ninos",
+    ind08:"credn", ind09:"credn", ind10:"nacidos", ind11:"nacidos", ind12:"nacidos",
+  };
+  const VOL_LAB = {
+    gestantes:"gestantes", cred:"controles CRED", ninos:"niños",
+    credn:"niños CRED", nacidos:"nacidos vivos",
+  };
   function ranking(q, ind) {
     const nivel = /provincia/.test(q) ? "provincias" : "distritos";
-    const campoVol = (ind.key === "ind01" || ind.key === "ind02") ? "gestantes" : "ninos";
+    const campoVol = VOL_DE[ind.key] || "ninos";
     let arr = D[nivel].filter(x => x[ind.campo] != null && (x[campoVol] || 0) >= MIN_CASOS);
-    const peor = /\b(peor|peores|mas abandono|mayor abandono|menos|menor)\b/.test(q) || (ind.mejor === "bajo" && !/\b(mejor|mejores|menos abandono|menor abandono)\b/.test(q));
-    let asc;
-    if (ind.mejor === "alto") asc = peor;
-    else asc = !peor;
+    const pideMayor = /\b(mas|mayor|alto|alta|top)\b/.test(q);
+    const pideMenor = /\b(menos|menor|bajo|baja)\b/.test(q);
+    let peor = /\b(peor|peores|mas abandono|mayor abandono)\b/.test(q) || (ind.mejor === "bajo" && !/\b(mejor|mejores|menos abandono|menor abandono)\b/.test(q));
+    let asc, etiqueta;
+    if (ind.mejor === "neutro") {
+      asc = pideMenor && !pideMayor;
+      etiqueta = asc ? "con menor" : "con mayor";
+    } else {
+      if (ind.mejor === "alto") asc = peor; else asc = !peor;
+      etiqueta = peor ? "con peor" : "con mejor";
+    }
     arr = arr.slice().sort((a,b) => asc ? a[ind.campo]-b[ind.campo] : b[ind.campo]-a[ind.campo]);
     const top = arr.slice(0, 5);
-    const etiqueta = peor ? "con peor" : "con mejor";
     if (!top.length) return { txt:`No hay ${nivel} con al menos ${MIN_CASOS} casos para rankear ${ind.nom}.`, foco:null };
-    const volLab = (ind.key === "ind01" || ind.key === "ind02") ? "gestantes" : "niños";
-    const volCampo = (ind.key === "ind01" || ind.key === "ind02") ? "gestantes" : "ninos";
+    const volCampo = VOL_DE[ind.key] || "ninos";
+    const volLab = VOL_LAB[volCampo] || "casos";
     const filas = top.map((x,i) => {
       const nm = cap(x.Distrito || x.Provincia);
       return `${i+1}. ${qlink("Resumen de " + nm)}${x.Distrito?` <span class="mut">(${cap(x.Provincia)})</span>`:""} — ${pct(x[ind.campo])} <span class="mut">· ${fmt(x[volCampo])} ${volLab}</span>`;
@@ -147,8 +177,13 @@
       `• Abandono CRED (IND-03): <b>${pct(r.ind03)}</b><br>` +
       `• Adherencia suplementación (IND-04): <b>${pct(r.ind04)}</b><br>` +
       `• Continuidad Hb gestantes (IND-01): <b>${pct(r.ind01)}</b><br>` +
-      `• Recuperación gestantes (IND-02): <b>${pct(r.ind02)}</b><br><br>` +
-      `<span class="mut">Registros: ${fmt(r.gestantes)} gestantes · ${fmt(r.cred)} CRED · ${fmt(r.ninos)} niños con anemia.</span>`;
+      `• Recuperación gestantes (IND-02): <b>${pct(r.ind02)}</b><br>` +
+      `• Desnutrición crónica CRED (IND-08): <b>${pct(r.ind08)}</b><br>` +
+      `• Cobertura suplementación CRED (IND-09): <b>${pct(r.ind09)}</b><br>` +
+      `• Bajo peso al nacer (IND-10): <b>${pct(r.ind10)}</b><br>` +
+      `• Prematuridad (IND-11): <b>${pct(r.ind11)}</b><br>` +
+      `• Parto por cesárea (IND-12): <b>${pct(r.ind12)}</b><br><br>` +
+      `<span class="mut">Registros: ${fmt(r.gestantes)} gestantes · ${fmt(r.cred)} CRED · ${fmt(r.ninos)} niños con anemia · ${fmt(r.credn)} CRED nutrición · ${fmt(r.nacidos)} nacidos vivos.</span>`;
     const enfoque = {};
     if (lugar.tipo === "distrito") { enfoque.prov = lugar.prov; enfoque.dist = lugar.nombre; }
     else if (lugar.tipo === "provincia") { enfoque.prov = lugar.nombre; enfoque.dist = ""; }
@@ -170,6 +205,7 @@
     const r = D.meta.registros;
     const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = fmt(v); };
     setTxt("cGest", r.gestantes); setTxt("cCred", r.cred); setTxt("cNin", r.ninos);
+    setTxt("cCredn", r.credn); setTxt("cNac", r.nacidos);
   }
   const historial = [];
   function pushHistorial(q) {

@@ -1,5 +1,4 @@
 (function () {
-  // ---------- Modal de Consultas ----------
   const navConsultas = document.getElementById("navConsultas");
   const consultasModal = document.getElementById("consultasModal");
   const consultasBody = document.getElementById("consultasBody");
@@ -34,7 +33,6 @@
   if (consultasModal) consultasModal.addEventListener("click", (e) => { if (e.target === consultasModal) cerrarConsultas(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarConsultas(); });
 
-  // ---------- Exportar a Excel ----------
   const navExportar = document.getElementById("navExportar");
 
   const pct = (v) => (v == null ? "s/d" : Number(v).toFixed(1) + "%");
@@ -55,7 +53,6 @@
     const stamp = fecha.toLocaleString("es-PE");
     const wb = XLSX.utils.book_new();
 
-    // --- Hoja 1: Resumen ---
     const resumen = [
       ["AnemiaCero Junín — Reporte del dashboard"],
       ["Generado", stamp],
@@ -71,6 +68,8 @@
       ["Gestantes con anemia", e.volumen.gestantes],
       ["Controles CRED", e.volumen.cred],
       ["Niños <36m con anemia", e.volumen.ninos],
+      ["Estado nutricional CRED", e.volumen.credn],
+      ["Nacidos vivos (CNV)", e.volumen.nacidos],
     ];
     const wsR = XLSX.utils.aoa_to_sheet(resumen);
     wsR["!cols"] = anchos([34, 42, 14]);
@@ -81,7 +80,6 @@
     ];
     XLSX.utils.book_append_sheet(wb, wsR, "Resumen");
 
-    // --- Hoja 2: Detalle por distrito ---
     const headTabla = ["Distrito", "Provincia", "Niños dx", "Abandono CRED (IND-03)", "Adherencia (IND-04)", "Recuperación (IND-05)", "Alerta (IND-07)"];
     const filas = e.distritos.map(r => [
       r.Distrito, r.Provincia, r.ninos, pct(r.ind03), pct(r.ind04), pct(r.ind05), r.alerta,
@@ -97,7 +95,6 @@
     wsT["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 2, c: 0 }, e: { r: 2 + filas.length, c: 6 } }) };
     XLSX.utils.book_append_sheet(wb, wsT, "Distritos");
 
-    // --- Hoja 3: Embudo de seguimiento ---
     const nombreFunnel = {
       cred_mes: "Controles CRED (mes 1 a 11)",
       gestantes_dosaje: "Dosajes de Hb en gestantes (1 a 5)",
@@ -116,7 +113,6 @@
     wsF["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
     XLSX.utils.book_append_sheet(wb, wsF, "Embudo");
 
-    // --- Hoja 4: Severidad ---
     const sg = e.severidad.gestantes, sn = e.severidad.ninos;
     const sev = [
       ["Distribución por severidad (región)"],
@@ -129,6 +125,26 @@
     wsS["!cols"] = anchos([16, 10, 12, 10, 12]);
     wsS["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
     XLSX.utils.book_append_sheet(wb, wsS, "Severidad");
+
+    const nu = e.nutricion, pn = e.pesoNacer;
+    if (nu || pn) {
+      const nut = [["Estado nutricional y peso al nacer (región)"], []];
+      if (nu) {
+        nut.push(["ESTADO NUTRICIONAL — CRED (Niños JUNIN)"]);
+        nut.push(["Normal", "Desnutrición crónica", "Desnutrición global", "Desnutrición aguda"]);
+        nut.push([nu.NORMAL, nu.CRONICA, nu.GLOBAL, nu.AGUDA]);
+        nut.push([]);
+      }
+      if (pn) {
+        nut.push(["PESO AL NACER — CNV (nacidos vivos)"]);
+        nut.push(["Muy bajo (<1500g)", "Bajo (1500–2499g)", "Normal (2500–3999g)", "Alto (≥4000g)", "Sin dato"]);
+        nut.push([pn.MUY_BAJO, pn.BAJO, pn.NORMAL, pn.ALTO, pn.NULL]);
+      }
+      const wsN = XLSX.utils.aoa_to_sheet(nut);
+      wsN["!cols"] = anchos([22, 22, 22, 20, 12]);
+      wsN["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+      XLSX.utils.book_append_sheet(wb, wsN, "Nutricion");
+    }
 
     const safe = (e.nombre || "region").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "_").toLowerCase();
     const nombreArchivo = `AnemiaCero_${safe}_${fecha.toISOString().slice(0, 10)}.xlsx`;

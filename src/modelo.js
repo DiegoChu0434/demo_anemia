@@ -107,6 +107,61 @@
       nota: "T6 se excluye del cálculo de adherencia (campo no operativo, 0.2% de registros). Los demás atributos cumplen 3FN.",
     },
 
+    credn: {
+      titulo: "cred_nutricion",
+      origen: "DS4 · Niños JUNIN.csv (padrón nominal CRED, Región Junín)",
+      meta: "Dataset de <b>estado nutricional en controles CRED</b> (76,064 atenciones). Integra la antropometría del niño (peso, talla, Z-scores) y sus diagnósticos nutricionales. La geografía del establecimiento sale a las dimensiones; el hecho conserva la FK <b>renaes</b>.",
+      tablas: [
+        {
+          nombre: "hecho_cred_nutricion",
+          tipo: "Hecho · 3FN",
+          campos: [
+            { k: "id_atencion", key: "pk", d: "clave sustituta" },
+            { k: "renaes", key: "fk", d: "→ dim_establecimiento (Renipress)" },
+            { k: "fecha_atencion", d: "fecha de la atención" },
+            { k: "sexo", d: "sexo del niño" },
+            { k: "edad_meses", d: "edad en meses (0–60)" },
+            { k: "peso / talla", d: "antropometría medida" },
+            { k: "ptz / zte / zpe", d: "puntajes Z (P/T, T/E, P/E)" },
+            { k: "dx_pt / dx_te / dx_pe", d: "diagnósticos: aguda / crónica / global" },
+            { k: "dcronica", d: "0/1 derivado de Dx_TE = D.Crónica" },
+            { k: "cred_ok / supl_ok", d: "0/1 control y suplementación del mes" },
+            { k: "juntos / sis / qaliwarma", d: "programas sociales (0/1)" },
+          ],
+        },
+        DIM_ESTABLECIMIENTO, DIM_UBICACION,
+      ],
+      nota: "IND-08 (desnutrición crónica) se deriva de Dx_TE y IND-09 (cobertura de suplementación) de Suplementacion. La geografía usa Prov_EESS/Dist_EESS del establecimiento, coherente con el cruce geográfico-institucional del informe.",
+    },
+
+    nacidos: {
+      titulo: "nacidos_vivos",
+      origen: "DS5 · CNV_MINSA_CORTE_30112025.csv (Certificado de Nacido Vivo, filtrado a Junín)",
+      meta: "Dataset de <b>certificados de nacido vivo</b> (210,808 registros de Junín, extraídos del padrón nacional de ~4.87M por ubigeo de departamento 12). Describe el punto de partida del embudo: condiciones del nacimiento y perfil de la madre.",
+      tablas: [
+        {
+          nombre: "hecho_nacido_vivo",
+          tipo: "Hecho · 3FN",
+          campos: [
+            { k: "id_cnv", key: "pk", d: "clave sustituta" },
+            { k: "id_ubicacion", key: "fk", d: "→ dim_ubicacion (por ubigeo)" },
+            { k: "fecnac_anio / mes", d: "año y mes de nacimiento" },
+            { k: "peso_nacido", d: "peso al nacer en gramos" },
+            { k: "bajo_peso", d: "0/1 derivado (peso < 2500 g)" },
+            { k: "dur_emb_parto", d: "duración del embarazo (semanas)" },
+            { k: "prematuro", d: "0/1 derivado (< 37 semanas)" },
+            { k: "condicion_parto", d: "eutócico / cesárea / instrumentado" },
+            { k: "cesarea", d: "0/1 derivado de Condicion_Parto" },
+            { k: "sexo_nacido", d: "sexo del recién nacido" },
+            { k: "edad_madre / nivel_instr", d: "perfil de la madre" },
+            { k: "financiador_parto", d: "SIS / EsSalud / particular…" },
+          ],
+        },
+        DIM_UBICACION,
+      ],
+      nota: "El CNV no trae código RENAES ni nombre de distrito, por eso se cruza a nivel de provincia mediante el ubigeo INEI. IND-10 (bajo peso), IND-11 (prematuridad) e IND-12 (cesárea) se derivan de este hecho. Representa la etapa 0 (nacimiento) previa a gestación/CRED del embudo de atención.",
+    },
+
     establecimientos: {
       titulo: "establecimientos",
       origen: "Catálogo RENAES (441 establecimientos únicos, extraído de DS2)",

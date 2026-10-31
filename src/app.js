@@ -13,6 +13,9 @@
   function clsAbandono(v){ if(v==null)return""; return v>50?"bad":v>40?"warn":"good"; }
   function clsAdher(v){ if(v==null)return""; return v<40?"bad":v<60?"warn":"good"; }
   function clsCont(v){ if(v==null)return""; return v<15?"bad":v<40?"warn":"good"; }
+  function clsDcronica(v){ if(v==null)return""; return v>25?"bad":v>15?"warn":"good"; }
+  function clsBajoPeso(v){ if(v==null)return""; return v>10?"bad":v>7?"warn":"good"; }
+  function clsPrematuro(v){ if(v==null)return""; return v>10?"bad":v>6?"warn":"good"; }
 
   function initFiltros() {
     const sp = $("selProv");
@@ -50,8 +53,12 @@
     return {
       ind01: D.global.ind01_continuidad_hb, ind02: D.global.ind02_recup_gestantes,
       ind03: D.global.ind03_abandono_cred, ind04: D.global.ind04_adherencia_sup,
-      ind05: D.global.ind05_recup_ninos, alerta: D.global.alerta,
+      ind05: D.global.ind05_recup_ninos,
+      ind08: D.global.ind08_desnutricion_cronica, ind09: D.global.ind09_cobertura_supl,
+      ind10: D.global.ind10_bajo_peso, ind11: D.global.ind11_prematuridad, ind12: D.global.ind12_cesarea,
+      alerta: D.global.alerta,
       gestantes: D.meta.registros.gestantes, cred: D.meta.registros.cred, ninos: D.meta.registros.ninos,
+      credn: D.meta.registros.credn, nacidos: D.meta.registros.nacidos,
     };
   }
 
@@ -63,8 +70,10 @@
 
     renderAlerta(s.alerta);
     renderKpis(s);
+    renderKpis2(s);
     renderFunnel();
     renderSeveridad();
+    renderNutricion();
     renderVolumen(s);
     renderTabla();
   }
@@ -96,6 +105,16 @@
       kpiCard("ind03","IND-03","Abandono de controles CRED", s.ind03, clsAbandono(s.ind03)) +
       kpiCard("ind04","IND-04","Adherencia a suplementación (5° toma)", s.ind04, clsAdher(s.ind04)) +
       kpiCard("ind05","IND-05","Recuperación de anemia infantil", s.ind05, clsRecup(s.ind05));
+  }
+  function renderKpis2(s) {
+    const box = $("kpis2");
+    if (!box) return;
+    box.innerHTML =
+      kpiCard("ind10","IND-10","Bajo peso al nacer (<2500g)", s.ind10, clsBajoPeso(s.ind10)) +
+      kpiCard("ind11","IND-11","Prematuridad (<37 sem)", s.ind11, clsPrematuro(s.ind11)) +
+      kpiCard("ind12","IND-12","Parto por cesárea", s.ind12, "") +
+      kpiCard("ind08","IND-08","Desnutrición crónica infantil (CRED)", s.ind08, clsDcronica(s.ind08)) +
+      kpiCard("ind09","IND-09","Cobertura de suplementación (CRED)", s.ind09, clsAdher(s.ind09));
   }
 
   function renderFunnel() {
@@ -135,10 +154,36 @@
     }).join("");
   }
 
+  function renderNutricion() {
+    if (D.nutricion) {
+      const nu = D.nutricion;
+      const tot = (nu.NORMAL + nu.CRONICA + nu.GLOBAL + nu.AGUDA) || 1;
+      const parts = [["Normal",nu.NORMAL,"#2E7D32"],["Crónica",nu.CRONICA,"#C0392B"],
+                     ["Global",nu.GLOBAL,"#E8A317"],["Aguda",nu.AGUDA,"#D35400"]];
+      const el = $("nutri");
+      if (el) el.innerHTML = parts.filter(p=>p[1]>0).map(([lab,v,col])=>{
+        return `<div class="seg" style="background:${col};flex:${v}" title="${lab}: ${fmt(v)} (${(100*v/tot).toFixed(1)}%)">${lab} ${(100*v/tot).toFixed(0)}%</div>`;
+      }).join("");
+    }
+    if (D.peso_nacer) {
+      const pn = D.peso_nacer;
+      const tot = (pn.MUY_BAJO + pn.BAJO + pn.NORMAL + pn.ALTO + pn.NULL) || 1;
+      const parts = [["Muy bajo",pn.MUY_BAJO,"#8E1B1B"],["Bajo",pn.BAJO,"#C0392B"],
+                     ["Normal",pn.NORMAL,"#2E7D32"],["Alto",pn.ALTO,"#E8A317"],["s/d",pn.NULL,"#9AA5B1"]];
+      const el = $("pesoNac");
+      if (el) el.innerHTML = parts.filter(p=>p[1]>0).map(([lab,v,col])=>{
+        const w = 100*v/tot;
+        return `<div class="seg" style="background:${col};flex:${v}" title="${lab}: ${fmt(v)} (${w.toFixed(1)}%)">${w>=5?lab+" "+w.toFixed(0)+"%":""}</div>`;
+      }).join("");
+    }
+  }
+
   function renderVolumen(s) {
     const rows = [["Gestantes con anemia", s.gestantes, "#2E5496"],
                   ["Controles CRED", s.cred, "#3B7DD8"],
-                  ["Niños <36m con anemia", s.ninos, "#6FA8DC"]];
+                  ["Niños <36m con anemia", s.ninos, "#6FA8DC"],
+                  ["Estado nutricional CRED", s.credn, "#8B7BF0"],
+                  ["Nacidos vivos (CNV)", s.nacidos, "#B8A9FF"]];
     const max = Math.max(...rows.map(r=>r[1]),1);
     $("volumen").innerHTML = rows.map(([lab,v,col])=>
       `<div class="funnel-row"><div class="k" style="width:150px">${lab}</div>
@@ -229,11 +274,17 @@
           { cod: "IND-03", nombre: "Abandono de controles CRED", valor: s.ind03 },
           { cod: "IND-04", nombre: "Adherencia a suplementación (5° toma)", valor: s.ind04 },
           { cod: "IND-05", nombre: "Recuperación de anemia infantil", valor: s.ind05 },
+          { cod: "IND-10", nombre: "Bajo peso al nacer (<2500g)", valor: s.ind10 },
+          { cod: "IND-11", nombre: "Prematuridad (<37 sem)", valor: s.ind11 },
+          { cod: "IND-12", nombre: "Parto por cesárea", valor: s.ind12 },
+          { cod: "IND-08", nombre: "Desnutrición crónica infantil (CRED)", valor: s.ind08 },
+          { cod: "IND-09", nombre: "Cobertura de suplementación (CRED)", valor: s.ind09 },
         ],
         alerta: alertaLabel[s.alerta] || s.alerta,
-        volumen: { gestantes: s.gestantes, cred: s.cred, ninos: s.ninos },
+        volumen: { gestantes: s.gestantes, cred: s.cred, ninos: s.ninos, credn: s.credn, nacidos: s.nacidos },
         funnel: { clave: funnelKey, serie: D.funnel[funnelKey].slice() },
         severidad: { gestantes: D.severidad.gestantes, ninos: D.severidad.ninos },
+        nutricion: D.nutricion, pesoNacer: D.peso_nacer,
         distritos: filas.map(r => ({
           Distrito: cap(r.Distrito), Provincia: cap(r.Provincia),
           ninos: r.ninos, ind03: r.ind03, ind04: r.ind04, ind05: r.ind05,

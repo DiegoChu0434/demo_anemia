@@ -13,13 +13,15 @@
     ind03: { cod: "IND-03", nom: "abandono de controles CRED", mejor: "bajo", suf: "abandona los controles CRED", funnel: "cred_mes", vol: "ninos" },
     ind04: { cod: "IND-04", nom: "adherencia a la suplementaci\u00f3n con hierro", mejor: "alto", suf: "mantiene la suplementaci\u00f3n (5\u00aa toma)", funnel: "sup_toma", vol: "ninos" },
     ind05: { cod: "IND-05", nom: "recuperaci\u00f3n de anemia infantil", mejor: "alto", suf: "de los ni\u00f1os se recupera", funnel: "sup_toma", vol: "ninos" },
+    ind08: { cod: "IND-08", nom: "desnutrici\u00f3n cr\u00f3nica infantil (CRED)", mejor: "bajo", suf: "de ni\u00f1os CRED tiene desnutrici\u00f3n cr\u00f3nica", funnel: null, vol: "credn" },
+    ind09: { cod: "IND-09", nom: "cobertura de suplementaci\u00f3n en CRED", mejor: "alto", suf: "de ni\u00f1os CRED recibe suplementaci\u00f3n", funnel: null, vol: "credn" },
+    ind10: { cod: "IND-10", nom: "bajo peso al nacer", mejor: "bajo", suf: "de nacidos vivos tiene bajo peso (<2500g)", funnel: null, vol: "nacidos" },
+    ind11: { cod: "IND-11", nom: "prematuridad", mejor: "bajo", suf: "de nacimientos son prematuros (<37 sem)", funnel: null, vol: "nacidos" },
+    ind12: { cod: "IND-12", nom: "parto por ces\u00e1rea", mejor: "neutro", suf: "de partos son por ces\u00e1rea", funnel: null, vol: "nacidos" },
   };
+  const VOL_LAB = { gestantes: "gestantes", cred: "controles CRED", ninos: "ni\u00f1os", credn: "ni\u00f1os CRED", nacidos: "nacidos vivos" };
   const MIN_CASOS = 10;
 
-  // Hay backend (Netlify Function) cuando el sitio se sirve por http(s) y NO es
-  // apertura local del archivo. En ese caso la key vive en el servidor y el
-  // navegador llama a /api/gemini. En local (file:// o localhost) se usa la key
-  // de config.js directamente.
   const hayKeyLocal = () => !!(CFG.GEMINI_API_KEY && CFG.GEMINI_API_KEY.trim());
   const esServidorRemoto = () => {
     const p = location.protocol;
@@ -44,7 +46,12 @@
       `IND-02 recuperaci\u00f3n gestantes=${D.global.ind02_recup_gestantes}%, ` +
       `IND-03 abandono CRED=${D.global.ind03_abandono_cred}%, ` +
       `IND-04 adherencia suplementaci\u00f3n=${D.global.ind04_adherencia_sup}%, ` +
-      `IND-05 recuperaci\u00f3n ni\u00f1os=${D.global.ind05_recup_ninos}%.`,
+      `IND-05 recuperaci\u00f3n ni\u00f1os=${D.global.ind05_recup_ninos}%, ` +
+      `IND-08 desnutrici\u00f3n cr\u00f3nica CRED=${D.global.ind08_desnutricion_cronica}%, ` +
+      `IND-09 cobertura suplementaci\u00f3n CRED=${D.global.ind09_cobertura_supl}%, ` +
+      `IND-10 bajo peso al nacer=${D.global.ind10_bajo_peso}%, ` +
+      `IND-11 prematuridad=${D.global.ind11_prematuridad}%, ` +
+      `IND-12 parto por ces\u00e1rea=${D.global.ind12_cesarea}%.`,
       `Provincias: ${provs}.`,
       `Distritos con datos: ${dists}.`,
     ].join("\n");
@@ -54,7 +61,7 @@
 Interpretas la pregunta del usuario (teniendo en cuenta el historial de la conversaci\u00f3n) y devuelves UN SOLO objeto JSON (sin texto extra, sin markdown) con esta forma exacta:
 {
   "accion": "valor" | "ranking" | "alertas" | "resumen" | "ayuda" | "fuera_de_tema",
-  "indicador": "ind01" | "ind02" | "ind03" | "ind04" | "ind05" | null,
+  "indicador": "ind01" | "ind02" | "ind03" | "ind04" | "ind05" | "ind08" | "ind09" | "ind10" | "ind11" | "ind12" | null,
   "lugar": { "tipo": "distrito" | "provincia" | "global", "nombre": "<NOMBRE EN MAYUSCULAS EXACTO del contexto>" | null, "provincia": "<provincia del distrito en MAYUSCULAS>" | null },
   "nivel": "distritos" | "provincias" | null,
   "metrica": "volumen_gestantes" | "volumen_ninos" | "volumen_cred" | null,
@@ -69,6 +76,11 @@ Definiciones de indicadores:
 - ind03: abandono de controles CRED (ni\u00f1os). M\u00e1s BAJO es mejor (es malo cuando es alto).
 - ind04: adherencia a la suplementaci\u00f3n con hierro (5\u00aa toma). M\u00e1s alto es mejor.
 - ind05: recuperaci\u00f3n de anemia infantil. M\u00e1s alto es mejor.
+- ind08: desnutrici\u00f3n cr\u00f3nica infantil en controles CRED (talla baja para la edad). M\u00e1s BAJO es mejor (es malo cuando es alto).
+- ind09: cobertura de suplementaci\u00f3n con hierro en controles CRED. M\u00e1s alto es mejor.
+- ind10: bajo peso al nacer (reci\u00e9n nacidos < 2500g, dataset de nacidos vivos CNV). M\u00e1s BAJO es mejor.
+- ind11: prematuridad (nacimientos antes de 37 semanas, CNV). M\u00e1s BAJO es mejor.
+- ind12: parto por ces\u00e1rea (CNV). Es neutro, ni bueno ni malo; ord\u00e9nalo seg\u00fan pida el usuario (mayor/menor).
 
 Reglas:
 - "accion": "valor" cuando preguntan por un indicador en un lugar concreto. "ranking" cuando piden comparar/ordenar lugares (mejor/peor/d\u00f3nde hay m\u00e1s o menos, cu\u00e1l es el mayor/menor). "alertas" cuando preguntan por distritos en rojo/cr\u00edticos/en alerta. "resumen" cuando piden el estado general de un lugar o de la regi\u00f3n. "ayuda" solo para saludos sueltos o "qu\u00e9 puedes hacer". "fuera_de_tema" si no tiene que ver con estos datos de anemia.
@@ -94,8 +106,6 @@ Reglas:
       contents: [{ role: "user", parts: [{ text: construirContexto() + formatearHistorial(historial) + "\n\nPregunta actual del usuario: " + pregunta }] }],
       generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
     };
-    // En servidor remoto (Netlify) se llama a la funcion /api/gemini, que
-    // guarda la key en el entorno. En local, directo a Google con la key de config.js.
     let url;
     if (usaBackend()) {
       url = "/api/gemini";
@@ -135,8 +145,12 @@ Reglas:
     return {
       ind01: D.global.ind01_continuidad_hb, ind02: D.global.ind02_recup_gestantes,
       ind03: D.global.ind03_abandono_cred, ind04: D.global.ind04_adherencia_sup,
-      ind05: D.global.ind05_recup_ninos, alerta: D.global.alerta,
+      ind05: D.global.ind05_recup_ninos,
+      ind08: D.global.ind08_desnutricion_cronica, ind09: D.global.ind09_cobertura_supl,
+      ind10: D.global.ind10_bajo_peso, ind11: D.global.ind11_prematuridad, ind12: D.global.ind12_cesarea,
+      alerta: D.global.alerta,
       gestantes: D.meta.registros.gestantes, cred: D.meta.registros.cred, ninos: D.meta.registros.ninos,
+      credn: D.meta.registros.credn, nacidos: D.meta.registros.nacidos,
     };
   }
   function buscarLugar(lugar) {
@@ -160,6 +174,8 @@ Reglas:
     if (g == null || v == null) return "";
     const dif = Math.abs(v - g);
     if (dif < 0.1) return " Est\u00e1 en l\u00ednea con el promedio regional.";
+    if (meta.mejor === "neutro")
+      return ` ${v > g ? "Por encima" : "Por debajo"} del promedio regional (${pct(g)}).`;
     const peor = meta.mejor === "alto" ? v < g : v > g;
     return ` ${peor ? "Por debajo" : "Mejor que"} el promedio regional (${pct(g)}).`;
   }
@@ -188,14 +204,19 @@ Reglas:
     const fuente = esProv ? D.provincias : D.distritos;
     const n = Math.min(10, Math.max(1, limite || 5));
     let arr = fuente.filter(x => x[indKey] != null && (x[campoVol] || 0) >= MIN_CASOS);
-    const peor = orden === "peor" || (orden == null && meta.mejor === "bajo");
-    let asc;
-    if (meta.mejor === "alto") asc = peor; else asc = !peor;
+    let peor, asc;
+    if (meta.mejor === "neutro") {
+      peor = false;
+      asc = orden === "peor" || orden === "menor";
+    } else {
+      peor = orden === "peor" || (orden == null && meta.mejor === "bajo");
+      if (meta.mejor === "alto") asc = peor; else asc = !peor;
+    }
     arr = arr.slice().sort((a, b) => asc ? a[indKey] - b[indKey] : b[indKey] - a[indKey]);
     const top = arr.slice(0, n);
     const ambLab = esProv ? "provincias" : "distritos";
     if (!top.length) return { txt: `No hay ${ambLab} con al menos ${MIN_CASOS} casos para rankear ${meta.nom}.`, enfoque: null };
-    const volLab = (indKey === "ind01" || indKey === "ind02") ? "gestantes" : "ni\u00f1os";
+    const volLab = VOL_LAB[campoVol] || "casos";
     const filas = top.map((x, i) => {
       const nm = cap(esProv ? x.Provincia : x.Distrito);
       const sub = esProv ? "" : ` <span class="mut">(${cap(x.Provincia)})</span>`;
@@ -206,7 +227,7 @@ Reglas:
     const enfoque = { kpi: indKey, funnel: meta.funnel };
     if (esProv) { enfoque.prov = first.Provincia; enfoque.dist = ""; }
     else { enfoque.prov = first.Provincia; enfoque.dist = first.Distrito; }
-    const etiqueta = peor ? "con peor" : "con mejor";
+    const etiqueta = meta.mejor === "neutro" ? (asc ? "con menor" : "con mayor") : (peor ? "con peor" : "con mejor");
     const extra = comentario ? `${comentario}<br><br>` : "";
     if (n === 1) {
       const titulo = esProv ? "La provincia" : "El distrito";
@@ -286,8 +307,13 @@ Reglas:
       `\u2022 Abandono CRED (IND-03): <b>${pct(r.ind03)}</b><br>` +
       `\u2022 Adherencia suplementaci\u00f3n (IND-04): <b>${pct(r.ind04)}</b><br>` +
       `\u2022 Continuidad Hb gestantes (IND-01): <b>${pct(r.ind01)}</b><br>` +
-      `\u2022 Recuperaci\u00f3n gestantes (IND-02): <b>${pct(r.ind02)}</b><br><br>` +
-      `<span class="mut">Registros: ${fmt(r.gestantes)} gestantes \u00b7 ${fmt(r.cred)} CRED \u00b7 ${fmt(r.ninos)} ni\u00f1os con anemia.</span>`;
+      `\u2022 Recuperaci\u00f3n gestantes (IND-02): <b>${pct(r.ind02)}</b><br>` +
+      `\u2022 Desnutrici\u00f3n cr\u00f3nica CRED (IND-08): <b>${pct(r.ind08)}</b><br>` +
+      `\u2022 Cobertura suplementaci\u00f3n CRED (IND-09): <b>${pct(r.ind09)}</b><br>` +
+      `\u2022 Bajo peso al nacer (IND-10): <b>${pct(r.ind10)}</b><br>` +
+      `\u2022 Prematuridad (IND-11): <b>${pct(r.ind11)}</b><br>` +
+      `\u2022 Parto por ces\u00e1rea (IND-12): <b>${pct(r.ind12)}</b><br><br>` +
+      `<span class="mut">Registros: ${fmt(r.gestantes)} gestantes \u00b7 ${fmt(r.cred)} CRED \u00b7 ${fmt(r.ninos)} ni\u00f1os con anemia \u00b7 ${fmt(r.credn)} CRED nutrici\u00f3n \u00b7 ${fmt(r.nacidos)} nacidos vivos.</span>`;
     return { txt, enfoque: enfoqueDe(lugar, {}) };
   }
 

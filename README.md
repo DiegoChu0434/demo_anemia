@@ -1,9 +1,25 @@
 # AnemiaCero Junín — Demo del Monitor de Seguimiento Integrado
 
-Demo funcional basada en el **Informe Final** y los tres datasets abiertos de la DIRESA Junín
-(gestantes con anemia, controles CRED, niños menores de 36 meses con anemia).
+Demo funcional basada en el **Informe Final** y los datasets abiertos de la DIRESA Junín / MINSA.
+Integra **cinco** fuentes: gestantes con anemia, controles CRED, niños menores de 36 meses con
+anemia, estado nutricional en CRED (padrón nominal) y certificados de nacido vivo (CNV).
 
 Reproduce el flujo descrito en el informe: **ETL → indicadores analíticos → dashboard**.
+
+## Datasets integrados
+
+| Dataset | Archivo (`data/raw/`) | Registros | Rol |
+|---|---|---|---|
+| DS1 · Gestantes con anemia | `DATOS_ABIERTOS_GESTANTES_ANEMIA_DIRESAJUNIN.csv` | 4,791 | Etapa gestación |
+| DS2 · Controles CRED | `NIÑAS Y NIÑOS ... ONCE (11) CONTROLES CRED.csv` | 19,684 | Etapa CRED |
+| DS3 · Niños <36m con anemia | `Niños_menores_de_36_meses...csv` | 12,453 | Etapa tratamiento |
+| DS4 · Estado nutricional CRED | `Niños JUNIN.csv` | 76,064 | Nutrición infantil |
+| DS5 · Nacidos vivos (CNV) | `CNV_MINSA_CORTE_30112025.csv` | 210,808 | Etapa nacimiento |
+
+> DS5 llega como padrón **nacional** (~4.87M filas, 832 MB); el ETL lo lee por *chunks* y
+> lo **filtra a Junín** por ubigeo (departamento `12`) para mantener el foco regional del proyecto.
+> DS4 y DS5 se cruzan con el resto a nivel **geográfico-institucional** (provincia / distrito),
+> igual que los tres datasets originales.
 
 ## Contenido
 
@@ -19,7 +35,7 @@ demo_anemia/
 ├── data/                       # Datos
 │   ├── dashboard_data.json     #   Resultado del ETL (legible)
 │   ├── data.js                 #   Mismos datos como variable JS (abrir sin servidor)
-│   └── raw/                    #   Los 3 CSV crudos de la DIRESA Junín
+│   └── raw/                    #   Los 5 CSV crudos (DIRESA Junín / MINSA)
 │
 ├── etl/
 │   └── etl_indicadores.py      # ETL: limpia los CSV y calcula los indicadores
@@ -36,7 +52,7 @@ demo_anemia/
 
 | Pieza | Qué es |
 |---|---|
-| `etl/etl_indicadores.py` | Proceso ETL en Python: limpia los 3 CSV de `data/raw/`, estandariza (NULL→null, fechas ISO, severidad LEV/MOD/SEV, deduplicación) y calcula los 7 indicadores (IND-01 a IND-07) y el embudo, agregados por provincia y distrito. Escribe en `data/`. |
+| `etl/etl_indicadores.py` | Proceso ETL en Python: limpia los 5 CSV de `data/raw/`, estandariza (NULL→null, fechas ISO, severidad LEV/MOD/SEV, diagnósticos sin acentos, deduplicación), lee el CNV de 832 MB por *chunks* filtrando a Junín, y calcula los indicadores IND-01 a IND-12 y el embudo, agregados por provincia y distrito. Escribe en `data/`. |
 | `data/dashboard_data.json` | Resultado del ETL (datos legibles). |
 | `data/data.js` | Los mismos datos embebidos como variable JS (permite abrir el dashboard sin servidor). |
 | `index.html` | Dashboard web: KPIs, embudo de seguimiento, filtros en cascada, distribución por severidad, tabla de distritos con semáforo de alertas. |
@@ -139,6 +155,8 @@ Abre **`index.html`** con doble clic (funciona directamente en el navegador, sin
 
 ## Indicadores (definiciones del Informe, sección 3.4)
 
+Indicadores originales (DS1–DS3):
+
 - **IND-01** Continuidad del seguimiento de Hb en gestantes (llegan al 5° dosaje) → **5.8%**
 - **IND-02** Tasa de recuperación de gestantes → **17.8%**
 - **IND-03** Tasa de abandono de controles CRED (mes 1 → mes 11) → **39.6%**
@@ -146,6 +164,21 @@ Abre **`index.html`** con doble clic (funciona directamente en el navegador, sin
 - **IND-05** Tasa de recuperación de anemia infantil → **47.0%** *(post-deduplicación; el informe reporta 46.9% pre-ETL)*
 - **IND-06** Índice de retención del embudo (las tres series que dibuja el gráfico)
 - **IND-07** Nivel de alerta (semáforo): rojo si recuperación < 30% o abandono CRED > 50%; ámbar en rangos intermedios; solo se evalúa con ≥ 10 casos.
+
+Indicadores añadidos con los nuevos datasets (DS4–DS5), calculados con la misma metodología
+(razón numerador/denominador por nivel geográfico, agregando y no promediando porcentajes):
+
+- **IND-08** Desnutrición crónica infantil en CRED (Dx talla/edad, DS4) → **20.2%**
+- **IND-09** Cobertura de suplementación en CRED (DS4) → **45.6%**
+- **IND-10** Bajo peso al nacer (<2500 g, DS5) → **7.5%**
+- **IND-11** Prematuridad (<37 semanas, DS5) → **5.8%**
+- **IND-12** Parto por cesárea (DS5) → **33.3%**
+
+El dashboard agrupa los KPIs en dos filas: *Seguimiento de anemia* (IND-01…05) y
+*Nacimiento y estado nutricional* (IND-08…12). El panel de distribución suma, a la severidad de
+anemia, el **estado nutricional** (normal / crónica / global / aguda) y el **peso al nacer**
+(muy bajo / bajo / normal / alto). El asistente (reglas locales y Gemini) reconoce los nuevos
+indicadores en preguntas como *«¿dónde hay más desnutrición crónica?»* o *«bajo peso al nacer en Satipo»*.
 
 ## Notas
 

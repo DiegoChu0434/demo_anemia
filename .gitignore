@@ -1,6 +1,8 @@
 # --- Secretos / configuracion local ---
 # La clave de la IA vive aqui y NO debe subirse. La plantilla publica es src/config.example.js.
 src/config.js
+# Cadena de conexion a Neon/PostgreSQL (NO subir). La usa etl/cargar_neon.py.
+.env
 
 # --- Python (ETL) ---
 __pycache__/
@@ -25,3 +27,8 @@ Desktop.ini
 
 # Carpeta temporal de publicacion
 _deploy/
+
+# --- Dataset crudo muy grande (CNV nacional, ~832 MB) ---
+# El dashboard NO lo necesita: el ETL lo procesa localmente y el front consume
+# data/data.js (agregado, ~43 KB). GitHub rechaza archivos > 100 MB.
+data/raw/CNV_MINSA_CORTE_30112025.csv

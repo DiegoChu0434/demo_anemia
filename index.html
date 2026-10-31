@@ -5,40 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AnemiaCero Junín — Analytics</title>
 <script>
-  // Aplica el tema guardado antes de pintar, para evitar parpadeo.
   try { if (localStorage.getItem("ac_tema") === "dark") document.documentElement.setAttribute("data-theme","dark"); } catch (e) {}
 </script>
 <style>
   :root{
-    /* ---- TEMA CLARO (por defecto) ---- */
-    --bg:#f5f6fa;           /* fondo claro */
-    --bg2:#ffffff;          /* paneles */
-    --bg3:#eef0f6;          /* cards / inputs */
-    --line:#e2e4ee;         /* bordes sutiles */
+
+    --bg:#f5f6fa;
+    --bg2:#ffffff;
+    --bg3:#eef0f6;
+    --line:#e2e4ee;
     --line2:#d2d5e3;
-    --txt:#1a1a2e;          /* texto principal */
-    --mut:#6b6b82;          /* texto atenuado */
-    --mut2:#9aa0b5;         /* aun mas tenue */
-    --violeta:#6d5bd0;      /* acento */
+    --txt:#1a1a2e;
+    --mut:#6b6b82;
+    --mut2:#9aa0b5;
+    --violeta:#6d5bd0;
     --violeta2:#5a46c0;
     --verde:#16a34a; --verde-bg:rgba(22,163,74,.12);
     --ambar:#d97706; --ambar-bg:rgba(217,119,6,.14);
     --rojo:#dc2626;  --rojo-bg:rgba(220,38,38,.10);
-    --sobre-acento:#ffffff; /* texto sobre violeta/verde/etc. */
+    --sobre-acento:#ffffff;
     --mono:'SF Mono','Consolas','Courier New',monospace;
   }
-  /* ---- TEMA OSCURO (al activar dark mode) ---- */
+
   [data-theme="dark"]{
     --sobre-acento:#0a0a12;
-    --bg:#0a0a12;           /* fondo casi negro */
-    --bg2:#0e0e18;          /* paneles */
-    --bg3:#141422;          /* cards / inputs */
-    --line:#20202f;         /* bordes sutiles */
+    --bg:#0a0a12;
+    --bg2:#0e0e18;
+    --bg3:#141422;
+    --line:#20202f;
     --line2:#2a2a3d;
-    --txt:#e6e6f0;          /* texto principal */
-    --mut:#6b6b82;          /* texto atenuado */
-    --mut2:#4a4a5e;         /* aun mas tenue */
-    --violeta:#8b7bf0;      /* acento */
+    --txt:#e6e6f0;
+    --mut:#6b6b82;
+    --mut2:#4a4a5e;
+    --violeta:#8b7bf0;
     --violeta2:#a99bff;
     --verde:#4ade80; --verde-bg:rgba(74,222,128,.12);
     --ambar:#fbbf24; --ambar-bg:rgba(251,191,36,.12);
@@ -49,7 +48,6 @@
   body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);
        font-size:14px;overflow:hidden;-webkit-font-smoothing:antialiased}
 
-  /* ===== TOPBAR ===== */
   .topbar{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;
           padding:0 20px;gap:22px;background:var(--bg);position:relative;z-index:10}
   .topbar .burger{color:var(--mut);font-size:16px;cursor:pointer}
@@ -70,10 +68,8 @@
              border-radius:8px;font-size:15px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center}
   .btn-theme:hover{border-color:var(--violeta)}
 
-  /* ===== LAYOUT ===== */
   .app{display:flex;height:calc(100vh - 52px)}
 
-  /* Sidebar */
   .sidebar{width:210px;border-right:1px solid var(--line);padding:20px 18px;overflow-y:auto;flex-shrink:0;background:var(--bg)}
   .side-sec{font-size:10px;color:var(--mut2);letter-spacing:2px;font-family:var(--mono);margin:0 0 12px}
   .side-sec:not(:first-child){margin-top:26px}
@@ -86,10 +82,8 @@
   .hist-item:hover{color:var(--violeta2)}
   .hist-empty{font-size:11.5px;color:var(--mut2);font-family:var(--mono)}
 
-  /* Main */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 
-  /* ---- Estado inicial: hero centrado ---- */
   .hero{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px 40px;overflow-y:auto}
   .app.active .hero{display:none}
   .hero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--mut);margin-bottom:18px}
@@ -107,11 +101,9 @@
   .sug:hover .arrow{opacity:1;transform:translateX(0)}
   .sug .arrow{margin-left:auto;color:var(--violeta);opacity:0;transform:translateX(-6px);transition:.2s}
 
-  /* ---- Estado activo: chat + dashboard ---- */
   .workspace{flex:1;display:none;min-height:0}
   .app.active .workspace{display:flex}
 
-  /* Chat (izquierda) */
   .chat{width:38%;min-width:360px;max-width:480px;border-right:1px solid var(--line);
         display:flex;flex-direction:column;min-height:0}
   .chat-log{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;min-height:0}
@@ -132,7 +124,6 @@
   .msg.user .qlink{color:var(--sobre-acento);border-bottom-color:rgba(255,255,255,.5)}
   @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-  /* Dashboard (derecha) */
   .dash{flex:1;overflow-y:auto;padding:24px 26px;min-width:0;
         opacity:0;transform:translateX(24px);transition:opacity .5s ease .15s,transform .5s ease .15s}
   .app.active .dash{opacity:1;transform:none}
@@ -153,6 +144,8 @@
   .alerta.sin_datos{background:var(--bg3);color:var(--mut);border:1px solid var(--line)}
   .alerta .dot{width:12px;height:12px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
 
+  .kpi-group-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:1.2px;color:var(--mut2);
+                 text-transform:uppercase;margin:4px 0 9px}
   .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px}
   .kpi{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:14px;position:relative;transition:.3s}
   .kpi.hl{border-color:var(--violeta);box-shadow:0 0 0 1px var(--violeta),0 8px 24px rgba(139,123,240,.15);transform:translateY(-3px)}
@@ -201,7 +194,6 @@
   .tbl-wrap{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:9px}
   .num{font-family:var(--mono)}
 
-  /* ===== INPUT INFERIOR ===== */
   .composer{border-top:1px solid var(--line);padding:16px 22px;background:var(--bg)}
   .app.active .composer .chips{display:none}
   .composer .inbox{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--line2);
@@ -215,7 +207,6 @@
   .composer .foot{font-family:var(--mono);font-size:10.5px;color:var(--mut2);margin-top:9px}
   .composer .foot kbd{color:var(--mut);background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
 
-  /* help flotante */
   .help{position:fixed;right:18px;bottom:16px;width:30px;height:30px;border-radius:50%;
         border:1px solid var(--line2);background:var(--bg3);color:var(--mut);display:flex;
         align-items:center;justify-content:center;font-size:13px;cursor:pointer;z-index:20}
@@ -226,7 +217,6 @@
   .tabla-row[data-ds]:hover{color:var(--violeta2)}
   .tabla-row[data-ds]:hover .cnt{color:var(--violeta2)}
 
-  /* Modal modelo 3FN */
   .modal-ov{position:fixed;inset:0;background:rgba(5,5,10,.72);backdrop-filter:blur(3px);
             display:none;align-items:center;justify-content:center;z-index:50;padding:30px}
   .modal-ov.open{display:flex;animation:ovIn .2s ease}
@@ -279,7 +269,6 @@
 </head>
 <body>
 
-<!-- ===== TOPBAR ===== -->
 <div class="topbar">
   <span class="burger">☰</span>
   <div class="brand"><b>AnemiaCero</b><span>junín analytics</span></div>
@@ -297,35 +286,33 @@
 
 <div class="app" id="app">
 
-  <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar">
     <p class="side-sec">DATASETS <span class="side-hint">· clic para ver su 3FN</span></p>
     <div class="tabla-row" data-ds="gestantes"><span>gestantes</span><span class="cnt" id="cGest">—</span></div>
     <div class="tabla-row" data-ds="cred"><span>controles_cred</span><span class="cnt" id="cCred">—</span></div>
     <div class="tabla-row" data-ds="ninos"><span>ninos_anemia</span><span class="cnt" id="cNin">—</span></div>
+    <div class="tabla-row" data-ds="credn"><span>cred_nutricion</span><span class="cnt" id="cCredn">—</span></div>
+    <div class="tabla-row" data-ds="nacidos"><span>nacidos_vivos</span><span class="cnt" id="cNac">—</span></div>
     <div class="tabla-row" data-ds="establecimientos"><span>establecimientos</span><span class="cnt" id="cEst">441</span></div>
     <p class="side-sec">HISTORIAL</p>
     <div id="historial"><div class="hist-empty">— sin consultas aún</div></div>
 
   </aside>
 
-  <!-- ===== MAIN ===== -->
   <main class="main">
 
-    <!-- Estado inicial -->
     <section class="hero" id="hero">
       <div class="eyebrow">ANEMIACERO / <b>READY</b></div>
       <h1>Pregunta a tus datos</h1>
       <p class="lead">Escribe en lenguaje natural lo que quieres analizar. El asistente interpretará tu consulta y generará el dashboard con los indicadores reales de la DIRESA Junín.</p>
     </section>
 
-    <!-- Estado activo -->
     <section class="workspace" id="workspace">
-      <!-- Chat -->
+
       <div class="chat">
         <div class="chat-log" id="chatLog"></div>
       </div>
-      <!-- Dashboard -->
+
       <div class="dash" id="dash">
         <div class="dash-head">
           <div>
@@ -341,7 +328,10 @@
           <button class="reset" id="btnReset">limpiar</button>
         </div>
         <div class="alerta" id="alerta"><span class="dot"></span><span id="alertaTxt"></span></div>
+        <div class="kpi-group-lab">Seguimiento de anemia · gestación → CRED → tratamiento</div>
         <div class="kpis" id="kpis"></div>
+        <div class="kpi-group-lab">Nacimiento y estado nutricional · CNV y CRED (datasets integrados)</div>
+        <div class="kpis" id="kpis2"></div>
         <div class="grid">
           <div class="panel" id="panelFunnel">
             <h3>Embudo de seguimiento</h3>
@@ -355,10 +345,12 @@
             <p class="hint" id="funnelNote" style="margin-top:10px"></p>
           </div>
           <div class="panel" id="panelSev">
-            <h3>Severidad y volumen</h3>
-            <p class="hint">Clasificación al diagnóstico y registros por etapa.</p>
-            <div style="margin-top:8px"><b style="font-size:11.5px;color:var(--mut)">Gestantes</b><div class="sev" id="sevGest"></div></div>
-            <div style="margin-top:12px"><b style="font-size:11.5px;color:var(--mut)">Niños &lt;36m</b><div class="sev" id="sevNin"></div></div>
+            <h3>Severidad, nutrición y volumen</h3>
+            <p class="hint">Clasificación al diagnóstico, estado nutricional, peso al nacer y registros por etapa.</p>
+            <div style="margin-top:8px"><b style="font-size:11.5px;color:var(--mut)">Anemia · Gestantes</b><div class="sev" id="sevGest"></div></div>
+            <div style="margin-top:12px"><b style="font-size:11.5px;color:var(--mut)">Anemia · Niños &lt;36m</b><div class="sev" id="sevNin"></div></div>
+            <div style="margin-top:12px"><b style="font-size:11.5px;color:var(--mut)">Estado nutricional · CRED</b><div class="sev" id="nutri"></div></div>
+            <div style="margin-top:12px"><b style="font-size:11.5px;color:var(--mut)">Peso al nacer · CNV</b><div class="sev" id="pesoNac"></div></div>
             <div style="margin-top:16px"><b style="font-size:11.5px;color:var(--mut)">Volumen por etapa</b><div id="volumen" style="margin-top:6px"></div></div>
           </div>
         </div>
@@ -383,7 +375,6 @@
       </div>
     </section>
 
-    <!-- Composer (input inferior, siempre visible) -->
     <div class="composer">
       <div class="inbox">
         <input id="chatInput" type="text" placeholder="Escribe tu consulta…" autocomplete="off">
